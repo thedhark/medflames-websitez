@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, Building2, GraduationCap, Users, Stethoscope } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const RegistrationModal = ({ isOpen, onClose, partnerType, accentColor = '#3b82f6' }) => {
     const [step, setStep] = useState(1);
@@ -23,14 +25,24 @@ const RegistrationModal = ({ isOpen, onClose, partnerType, accentColor = '#3b82f
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
+
+        try {
+            await addDoc(collection(db, "registrations"), {
+                ...formData,
+                partnerType,
+                submittedAt: serverTimestamp(),
+                status: 'pending' // Initial status
+            });
             setStep(3); // Success state
-        }, 1500);
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            alert("Error submitting form. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // --- DYNAMIC FORM CONFIGURATION ---
